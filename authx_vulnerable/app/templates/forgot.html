@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Resetare Parolă</h2>
+<form method="POST">
+    <label>Introdu email-ul contului:</label>
+    <input type="text" name="email" required>
+    <button type="submit">Trimite link de resetare</button>
+</form>
+<a href="{{ url_for('login') }}">Înapoi la login</a>
+{% endblock %}
