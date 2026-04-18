@@ -27,3 +27,30 @@ def dashboard():
     conn.close()
 
     return render_template('dashboard.html', user=user, tickets=tickets)
+
+@app.route('/create_ticket', methods=['GET', 'POST'])
+def create_ticket():
+    # Identificăm userul din cookie-ul vulnerabil
+    user_id = request.cookies.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        severity = request.form.get('severity', 'LOW')
+
+        # VULNERABILITATE: Nu există nicio curățare (sanitizare) a input-ului.
+        # Atacatorul poate introduce cod <script> direct aici.
+        conn = get_db_connection()
+        conn.execute(
+            'INSERT INTO tickets (title, description, severity, owner_id) VALUES (?, ?, ?, ?)',
+            (title, description, severity, user_id)
+        )
+        conn.commit()
+        conn.close()
+
+        flash('Tichet creat cu succes!')
+        return redirect(url_for('dashboard'))
+
+    return render_template('create_ticket.html')

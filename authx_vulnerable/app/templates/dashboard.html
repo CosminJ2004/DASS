@@ -5,16 +5,16 @@
 <p>Salut, <strong>{{ user['email'] }}</strong>! Ești autentificat cu succes.</p>
 <p>Rolul tău: {{ user['role'] }} | ID-ul tău în sistem: {{ user['id'] }}</p>
 
-<h3>Tichetele din sistem:</h3>
-{% if tickets %}
-    <ul>
+<h3>Tichetele tale:</h3>
+<ul>
     {% for ticket in tickets %}
-        <li>{{ ticket['title'] }} - Status: {{ ticket['status'] }}</li>
+    <li>
+        <strong>{{ ticket['title'] }}</strong> ({{ ticket['severity'] }})<br>
+        Descriere: {{ ticket['description'] | safe }}
+    </li>
     {% endfor %}
-    </ul>
-{% else %}
-    <p>Nu există tichete în baza de date momentan.</p>
-{% endif %}
+</ul>
+<a href="{{ url_for('create_ticket') }}" class="btn">Creează Tichet Nou</a>
 
 <br>
 <a href="{{ url_for('logout') }}" class="btn">Logout</a>
