@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="content-box">
+    <h2>Creare Tichet Suport</h2>
+    <p>Completează detaliile problemei. Toate acțiunile sunt înregistrate în logurile de audit.</p>
+    
+    <form method="POST" action="{{ url_for('create_ticket') }}" style="margin-top: 20px;">
+        <label for="title">Subiect:</label>
+        <input type="text" name="title" id="title" placeholder="Ex: Eroare la accesare server" required>
+        
+        <label for="description">Descriere Detaliată:</label>
+        <textarea name="description" id="description" rows="5" placeholder="Descrie pașii pentru reproducerea problemei..." required></textarea>
+        
+        <label for="severity">Nivel Severitate:</label>
+        <select name="severity" id="severity">
+            <option value="LOW">LOW - Scăzută (Nu impactează producția)</option>
+            <option value="MED">MED - Medie (Impact parțial)</option>
+            <option value="HIGH">HIGH - Ridicată (Sistem blocat)</option>
+        </select>
+        
+        <button type="submit" class="btn-primary" style="margin-top: 15px;">Înregistrează Tichet</button>
+    </form>
+</div>
+
+<div class="actions" style="margin-top: 20px;">
+    <a href="{{ url_for('dashboard') }}" class="btn-logout">Înapoi la Dashboard</a>
+</div>
+{% endblock %}

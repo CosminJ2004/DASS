@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Recuperare Acces Cont</h2>
+<p>Introdu email-ul pentru a primi un token de resetare de unică folosință.</p>
+<form method="POST">
+    <label>Email:</label>
+    <input type="email" name="email" required>
+    <button type="submit">Generare Token</button>
+</form>
+<a href="{{ url_for('login') }}">Înapoi la Login</a>
+{% endblock %}
