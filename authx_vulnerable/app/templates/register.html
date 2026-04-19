@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Creare Cont</h2>
+<form method="POST" action="{{ url_for('register') }}">
+    <label for="email">Email:</label>
+    <input type="text" name="email" id="email" required>
+    
+    <label for="password">Parolă (oricât de slabă):</label>
+    <input type="password" name="password" id="password" required>
+    
+    <button type="submit">Înregistrare</button>
+</form>
+<p>Ai deja cont? <a href="{{ url_for('login') }}">Loghează-te aici</a>.</p>
+{% endblock %}

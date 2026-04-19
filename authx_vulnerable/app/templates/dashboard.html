@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="border: 2px solid #d9534f; padding: 20px; border-radius: 10px; background-color: #fff5f5;">
+    <h2 style="color: #d9534f;">Panou de Control (v1 - Vulnerabil)</h2>
+    
+    <div style="margin: 20px 0; padding: 15px; background: #eee; border-left: 5px solid #333;">
+        <p>Utilizator logat: <strong>{{ user['email'] }}</strong></p>
+        <p style="font-size: 1.2em;">
+            Rol detectat în sesiune: 
+            <span style="background: yellow; padding: 5px 10px; font-weight: bold; border: 1px solid #000;">
+                {{ current_role }}
+            </span>
+        </p>
+    </div>
+
+    <h3>Resurse disponibile pentru rolul de {{ current_role }}:</h3>
+    
+    {% if tickets %}
+        <ul style="list-style: none; padding: 0;">
+        {% for ticket in tickets %}
+            <li style="background: white; margin-bottom: 10px; padding: 10px; border: 1px solid #ccc;">
+                <strong>{{ ticket['title'] }}</strong> - Status: {{ ticket['status'] }}
+                
+                {# VULNERABILITATE: Afișăm opțiunile de admin doar bazându-ne pe cookie #}
+                {% if current_role == 'MANAGER' %}
+                <div style="margin-top: 10px; background: #f0f0f0; padding: 5px;">
+                    <small>[OPȚIUNI MANAGER ACTIVATED]</small>
+                    <form action="{{ url_for('change_status', ticket_id=ticket['id']) }}" method="POST" style="display:inline;">
+                        <select name="status">
+                            <option value="OPEN">OPEN</option>
+                            <option value="IN PROGRESS">IN PROGRESS</option>
+                            <option value="RESOLVED">RESOLVED</option>
+                        </select>
+                        <button type="submit" style="background: #5bc0de; color: white; border: none; padding: 3px 10px;">Modifică</button>
+                    </form>
+                </div>
+                {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nu există tichete vizibile pentru acest nivel de acces.</p>
+    {% endif %}
+
+    <hr>
+    <div style="display: flex; gap: 10px;">
+        <a href="{{ url_for('create_ticket') }}" style="text-decoration: none; color: blue;">+ Creează Tichet</a>
+        <a href="{{ url_for('logout') }}" style="text-decoration: none; color: red;">Logout</a>
+    </div>
+</div>
+
+
+{% endblock %}
