@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h2>Dashboard - Resurse Sensibile</h2>
+    <p>Utilizator: <strong>{{ user['email'] }}</strong></p>
+    <p>Rol Sistem: <span class="badge">{{ user['role'] }}</span></p>
+</div>
+
+<div class="content-box">
+    <h3>Tichetele din Sistem</h3>
+    {% if tickets %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Titlu</th>
+                    <th>Severitate</th>
+                    <th>Status curent</th>
+                    {% if user['role'] == 'MANAGER' %}
+                        <th>Proprietar</th>
+                        <th>Acțiuni Manager</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td>#{{ ticket['id'] }}</td>
+                    <td>{{ ticket['title'] }}</td>
+                    <td>{{ ticket['severity'] }}</td>
+                    <td><span class="status-{{ ticket['status']|lower }}">{{ ticket['status'] }}</span></td>
+                    
+                    {% if user['role'] == 'MANAGER' %}
+                    <td>{{ ticket['owner_email'] }}</td>
+                    <td>
+                        <form action="{{ url_for('change_status', ticket_id=ticket['id']) }}" method="POST" style="display:inline;">
+                            <select name="status" onchange="this.form.submit()">
+                                <option value="OPEN" {% if ticket['status'] == 'OPEN' %}selected{% endif %}>OPEN</option>
+                                <option value="IN PROGRESS" {% if ticket['status'] == 'IN PROGRESS' %}selected{% endif %}>IN PROGRESS</option>
+                                <option value="RESOLVED" {% if ticket['status'] == 'RESOLVED' %}selected{% endif %}>RESOLVED</option>
+                            </select>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Nu există tichete de afișat.</p>
+    {% endif %}
+</div>
+
+{% if user['role'] == 'MANAGER' %}
+<div class="content-box" style="margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px;">
+    <h3>Loguri de Audit (Securitate)</h3>
+    <table class="data-table" style="font-size: 0.9em;">
+        <thead>
+            <tr>
+                <th>Data / Ora</th>
+                <th>Utilizator</th>
+                <th>Acțiune Efectuată</th>
+                <th>Adresă IP</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log['timestamp'] }}</td>
+                <td>{{ log['email'] or 'Sistem/Anonim' }}</td>
+                <td>{{ log['action'] }}</td>
+                <td>{{ log['ip_address'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="actions" style="margin-top: 20px;">
+    <a href="{{ url_for('logout') }}" class="btn-logout">Deconectare Securizată</a>
+</div>
+{% endblock %}

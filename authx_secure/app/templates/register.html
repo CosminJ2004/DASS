@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Înregistrare Utilizator Nou</h2>
+<form method="POST" action="{{ url_for('register') }}">
+    <label for="email">Adresă Email:</label>
+    <input type="email" name="email" id="email" placeholder="nume@companie.ro" required>
+    
+    <label for="password">Parolă Nouă:</label>
+    <input type="password" name="password" id="password" required>
+    <small>Minim 8 caractere și cel puțin o cifră.</small>
+    
+    <button type="submit" class="btn-primary">Creează Cont Securizat</button>
+</form>
+<p>Ai deja un cont? <a href="{{ url_for('login') }}">Autentifică-te</a>.</p>
+{% endblock %}
