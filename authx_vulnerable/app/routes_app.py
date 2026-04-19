@@ -1,4 +1,6 @@
 # app/routes_app.py
+from dbm import sqlite3
+
 from flask import render_template, request, redirect, url_for, flash
 from app import app, get_db_connection
 
@@ -79,3 +81,31 @@ def create_ticket():
         return redirect(url_for('dashboard'))
 
     return render_template('create_ticket.html')
+
+@app.route('/search', methods=['GET'])
+def search():
+    query = request.args.get('q', '')
+    user_id = request.cookies.get('user_id')
+    role = request.cookies.get('role', 'USER')
+
+    if not user_id:
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+
+    # VULNERABILITATE CRITICĂ: SQL Injection (Concatenare directă de string-uri)
+    # Aici NU folosim "query parametrizat". Avem încredere oarbă în ce scrie utilizatorul.
+    sql_query = f"SELECT * FROM tickets WHERE title LIKE '%{query}%' OR description LIKE '%{query}%'"
+    
+    try:
+        tickets = conn.execute(sql_query).fetchall()
+    except sqlite3.Error as e:
+        # VULNERABILITATE (Information Disclosure): Arătăm eroarea exactă de DB atacatorului
+        flash(f"Eroare Bază de Date: {e}") 
+        tickets = []
+
+    conn.close()
+    
+    # Returnăm la același dashboard vulnerabil
+    return render_template('dashboard.html', user=user, tickets=tickets, current_role=role)
