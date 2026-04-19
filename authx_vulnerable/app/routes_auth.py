@@ -27,7 +27,6 @@ def register():
             conn.close()
 
     return render_template('register.html')
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -38,7 +37,6 @@ def login():
         user = conn.execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
         conn.close()
 
-        # VULNERABILITATE: User Enumeration (mesaje diferite pentru user greșit vs parolă greșită) [cite: 14]
         if user is None:
             flash('Utilizatorul nu există în baza de date!')
             return redirect(url_for('login'))
@@ -47,11 +45,13 @@ def login():
             flash('Parola este greșită!')
             return redirect(url_for('login'))
 
-        # VULNERABILITATE: Gestionare nesigură a sesiunilor [cite: 14]
-        # Setăm un cookie simplu cu ID-ul userului, fără HttpOnly, Secure sau expirare
-        # Acest lucru permite IDOR (Insecure Direct Object Reference) și Session Hijacking
         response = make_response(redirect(url_for('dashboard')))
         response.set_cookie('user_id', str(user['id']))
+        
+        # VULNERABILITATE NOUĂ: Salvăm rolul direct în cookie! 
+        # Serverul va avea încredere oarbă în acest cookie ulterior.
+        response.set_cookie('role', user['role']) 
+        
         return response
 
     return render_template('login.html')
@@ -63,42 +63,35 @@ def logout():
     response.set_cookie('user_id', '', expires=0)
     return response
 
+
 @app.route('/forgot', methods=['GET', 'POST'])
 def forgot():
+    # Dacă utilizatorul a completat formularul și a apăsat butonul de trimitere
     if request.method == 'POST':
         email = request.form['email']
         
-        # VULNERABILITATE: Resetare parolă nesigură (Token predictibil) [cite: 14]
-        # Generăm un "token" care este doar email-ul codat în Base64
-        token_bytes = email.encode('utf-8')
-        token_b64 = base64.b64encode(token_bytes).decode('utf-8')
+        # Generăm un token complet previzibil (Base64 al email-ului)
+        token = base64.b64encode(email.encode('utf-8')).decode('utf-8')
         
-        # În realitate am trimite un email. Aici doar îl afișăm (simulare)
-        flash(f'Link de resetare (simulat): /reset?token={token_b64}')
-        return redirect(url_for('forgot'))
+        # Afișăm link-ul direct pe ecran (simulăm trimiterea email-ului)
+        flash(f"Link resetare: /reset?token={token}")
+        return redirect(url_for('login'))
 
+    # Dacă utilizatorul doar a accesat pagina (request de tip GET)
     return render_template('forgot.html')
-
 @app.route('/reset', methods=['GET', 'POST'])
 def reset():
     token = request.args.get('token')
+    # Decodăm email-ul direct din token fără nicio verificare de securitate
+    email = base64.b64decode(token).decode()
     
     if request.method == 'POST':
         new_password = request.form['password']
-        # Decodăm token-ul pentru a afla user-ul
-        try:
-            email_bytes = base64.b64decode(token)
-            email = email_bytes.decode('utf-8')
-        except:
-            flash('Token invalid.')
-            return redirect(url_for('login'))
-
         conn = get_db_connection()
+        # Actualizăm parola direct (Vulnerabilitate: link-ul nu expiră niciodată)
         conn.execute('UPDATE users SET password = ? WHERE email = ?', (new_password, email))
         conn.commit()
         conn.close()
-
-        flash('Parola a fost resetată! Te poți loga.')
+        flash("Parola a fost schimbată!")
         return redirect(url_for('login'))
-
     return render_template('reset.html', token=token)
