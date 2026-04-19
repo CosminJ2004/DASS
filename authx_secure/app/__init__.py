@@ -31,12 +31,11 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row 
     return conn
 
-# Helper pentru logging de securitate
-def log_audit(user_id, action, ip_address):
+# app/__init__.py
+def log_audit(user_id, action, resource, resource_id, ip_address):
     conn = get_db_connection()
-    conn.execute('INSERT INTO audit_logs (user_id, action, ip_address) VALUES (?, ?, ?)',
-                 (user_id, action, ip_address))
+    conn.execute('INSERT INTO audit_logs (user_id, action, resource, resource_id, ip_address) VALUES (?, ?, ?, ?, ?)',
+                 (user_id, action, resource, resource_id, ip_address))
     conn.commit()
     conn.close()
-
 from app import routes_auth, routes_app

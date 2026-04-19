@@ -25,7 +25,8 @@ def register():
         try:
             conn.execute('INSERT INTO users (email, password_hash) VALUES (?, ?)', (email, password_hash))
             conn.commit()
-            log_audit(None, f"Register succes pentru {email}", request.remote_addr)
+            # UPDATED: log_audit cu 5 parametri
+            log_audit(None, f"Register succes pentru {email}", "auth", None, request.remote_addr)
             flash('Cont creat cu succes!', 'success')
             return redirect(url_for('login'))
         except conn.IntegrityError:
@@ -39,7 +40,7 @@ def register():
 
 # --- LOGIN ---
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute") # Fix 4.3: Rate limiting sever pe ruta de login
+@limiter.limit("5 per minute", methods=['POST']) # Fix 4.3: Rate limiting sever pe ruta de login
 def login():
     if request.method == 'POST':
         email = request.form['email']
@@ -53,14 +54,16 @@ def login():
 
         if user is None:
             conn.close()
-            log_audit(None, f"Login eșuat (user inexistent) pt {email}", request.remote_addr)
+            # UPDATED: log_audit cu 5 parametri
+            log_audit(None, f"Login eșuat (user inexistent) pt {email}", "auth", None, request.remote_addr)
             flash(generic_error, 'error')
             return redirect(url_for('login'))
 
         # Fix 4.3: Verificăm dacă contul este blocat
         if user['locked']:
             conn.close()
-            log_audit(user['id'], "Login încercat pe cont blocat", request.remote_addr)
+            # UPDATED: log_audit cu 5 parametri
+            log_audit(user['id'], "Login încercat pe cont blocat", "auth", None, request.remote_addr)
             flash('Contul este temporar blocat din cauza prea multor încercări eșuate.', 'error')
             return redirect(url_for('login'))
 
@@ -70,7 +73,8 @@ def login():
             new_attempts = user['failed_attempts'] + 1
             if new_attempts >= 5:
                 conn.execute('UPDATE users SET locked = 1, failed_attempts = ? WHERE id = ?', (new_attempts, user['id']))
-                log_audit(user['id'], "CONT BLOCAT - Brute force detectat", request.remote_addr)
+                # UPDATED: log_audit cu 5 parametri
+                log_audit(user['id'], "CONT BLOCAT - Brute force detectat", "auth", None, request.remote_addr)
             else:
                 conn.execute('UPDATE users SET failed_attempts = ? WHERE id = ?', (new_attempts, user['id']))
             conn.commit()
@@ -79,7 +83,7 @@ def login():
             flash(generic_error, 'error')
             return redirect(url_for('login'))
 
-       # Generăm un identificator unic de sesiune
+        # Generăm un identificator unic de sesiune
         session_token = secrets.token_hex(16)
         
         # Îl salvăm în Baza de Date
@@ -94,7 +98,8 @@ def login():
         session['email'] = user['email']
         session['session_token'] = session_token # Îl punem și în cookie-ul criptat
         
-        log_audit(user['id'], "Login cu succes", request.remote_addr)
+        # UPDATED: log_audit cu 5 parametri
+        log_audit(user['id'], "Login cu succes", "auth", None, request.remote_addr)
         return redirect(url_for('dashboard'))
 
     return render_template('login.html')
@@ -110,7 +115,8 @@ def logout():
         conn.execute('UPDATE users SET session_token = NULL WHERE id = ?', (user_id,))
         conn.commit()
         conn.close()
-        log_audit(user_id, "Logout", request.remote_addr)
+        # UPDATED: log_audit cu 5 parametri
+        log_audit(user_id, "Logout", "auth", None, request.remote_addr)
         
     session.clear()
     flash('Te-ai delogat în siguranță.', 'success')
@@ -118,7 +124,7 @@ def logout():
 
 # --- FORGOT PASSWORD ---
 @app.route('/forgot', methods=['GET', 'POST'])
-@limiter.limit("3 per hour") # Previne spam-ul de email-uri
+@limiter.limit("5 per minute", methods=['POST']) # Previne spam-ul de email-uri
 def forgot():
     if request.method == 'POST':
         email = request.form['email']
@@ -140,7 +146,8 @@ def forgot():
             
             # Aici în mod normal trimiți email-ul. Noi doar îl printăm în terminal.
             print(f"\n[SECURE SYSTEM] Link resetare pentru {email}: /reset?token={token}\n")
-            log_audit(user['id'], "Cerere resetare parolă", request.remote_addr)
+            # UPDATED: log_audit cu 5 parametri
+            log_audit(user['id'], "Cerere resetare parolă", "auth", None, request.remote_addr)
 
         conn.close()
         return redirect(url_for('login'))

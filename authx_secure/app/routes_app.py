@@ -120,4 +120,34 @@ def create_ticket():
 
     return render_template('create_ticket.html')
 
+@app.route('/search', methods=['GET'])
+def search():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
+    query = request.args.get('q', '').strip()
+    user_id = session['user_id']
+    
+    conn = get_db_connection()
+    user = conn.execute('SELECT role FROM users WHERE id = ?', (user_id,)).fetchone()
+    
+    # SECURE: Query Parametrizat (Prevenire SQL Injection)
+    # Folosim LIKE cu parametrii `?` protejați
+    if user['role'] == 'MANAGER':
+        # Managerul caută în toate tichetele
+        tickets = conn.execute(
+            'SELECT * FROM tickets WHERE title LIKE ? OR description LIKE ?', 
+            (f'%{query}%', f'%{query}%')
+        ).fetchall()
+    else:
+        # Analystul caută doar în ale lui (Prevenire IDOR la search)
+        tickets = conn.execute(
+            'SELECT * FROM tickets WHERE owner_id = ? AND (title LIKE ? OR description LIKE ?)', 
+            (user_id, f'%{query}%', f'%{query}%')
+        ).fetchall()
+
+    # Jurnalizăm căutarea
+    log_audit(user_id, f"Cautare query: {query}", "ticket", None, request.remote_addr)
+    conn.close()
+
+    return render_template('dashboard.html', user=user, tickets=tickets, search_query=query)

@@ -1,0 +1,22 @@
+authx_vulnerable/
+│
+├── app/
+│   ├── __init__.py          # Inițializarea aplicației Flask
+│   ├── database.py          # Conexiunea la SQLite (fără controale stricte)
+│   ├── routes_auth.py       # Aici punem logica vulnerabilă de Login/Register/Reset
+│   ├── routes_app.py        # Rutele pentru aplicație (dashboard, bilete)
+│   ├── models.py            # Definiția tabelelor: users, tickets, audit_logs
+│   │
+│   ├── templates/           # Frontend-ul super simplu (HTML + Jinja2)
+│   │   ├── base.html        # Layout-ul principal
+│   │   ├── register.html    # Fără validări complexe
+│   │   ├── login.html       # Formularul vulnerabil
+│   │   ├── forgot.html      # Resetare parolă
+│   │   └── dashboard.html   # Accesibil teoretic doar după login
+│   │
+│   └── static/
+│       └── style.css        # CSS minim pentru a nu arăta groaznic
+│
+├── requirements.txt         # Doar: Flask
+└── run.py                   # Fișierul care pornește serverul
+

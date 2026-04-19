@@ -19,7 +19,7 @@ def init_db():
         )
     ''')
 
-    # Tabelul TICKETS
+    # 2. Tabelul TICKETS (am adăugat updated_at)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tickets (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,18 +29,22 @@ def init_db():
             status TEXT DEFAULT 'OPEN',
             owner_id INTEGER,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (owner_id) REFERENCES users (id)
         )
     ''')
 
-    # Tabelul AUDIT_LOGS (Esențial pentru trasabilitate)
+    # 3. Tabelul AUDIT_LOGS (am adăugat resource și resource_id)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS audit_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             action TEXT,
+            resource TEXT,
+            resource_id TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             ip_address TEXT,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            FOREIGN KEY (user_id) REFERENCES users (id)
         )
     ''')
 
