@@ -81,6 +81,46 @@ def create_ticket():
 
     return render_template('create_ticket.html')
 
+# --- UPDATE: Editare Ticket (Vulnerabil la IDOR și XSS) ---
+@app.route('/edit_ticket/<int:ticket_id>', methods=['GET', 'POST'])
+def edit_ticket(ticket_id):
+    user_id = request.cookies.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        
+        # VULNERABILITATE: Update fără a verifica dacă userul deține ticketul (IDOR)
+        conn.execute('UPDATE tickets SET title = ?, description = ? WHERE id = ?',
+                     (title, description, ticket_id))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('dashboard'))
+
+    # VULNERABILITATE: Preluăm ticketul fără verificare owner_id (IDOR)
+    ticket = conn.execute('SELECT * FROM tickets WHERE id = ?', (ticket_id,)).fetchone()
+    conn.close()
+    return render_template('edit_ticket.html', ticket=ticket)
+
+# --- DELETE: Ștergere Ticket (Vulnerabil la IDOR) ---
+@app.route('/delete_ticket/<int:ticket_id>', methods=['POST'])
+def delete_ticket(ticket_id):
+    user_id = request.cookies.get('user_id')
+    if not user_id:
+        return redirect(url_for('login'))
+
+    conn = get_db_connection()
+    # VULNERABILITATE: Ștergem direct după ID, permițând atacatorului să șteargă tichetele altora
+    conn.execute('DELETE FROM tickets WHERE id = ?', (ticket_id,))
+    conn.commit()
+    conn.close()
+    
+    return redirect(url_for('dashboard'))
+
 @app.route('/search', methods=['GET'])
 def search():
     query = request.args.get('q', '')
