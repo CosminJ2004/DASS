@@ -1,5 +1,4 @@
-# app/routes_app.py
-from dbm import sqlite3
+import sqlite3
 
 from flask import render_template, request, redirect, url_for, flash
 from app import app, get_db_connection
