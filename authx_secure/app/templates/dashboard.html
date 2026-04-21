@@ -3,8 +3,14 @@
 {% block content %}
 <div class="dashboard-header">
     <h2>Dashboard - Resurse Sensibile</h2>
-    <p>Utilizator: <strong>{{ user['email'] }}</strong></p>
-    <p>Rol Sistem: <span class="badge">{{ user['role'] }}</span></p>
+    <p>Utilizator: <strong>{{ user['email'] }}</strong> [cite: 63, 73]</p>
+    <p>Rol Sistem: <span class="badge">{{ user['role'] }}</span> [cite: 80]</p>
+</div>
+
+<div class="actions-bar" style="margin-bottom: 20px;">
+    <a href="{{ url_for('create_ticket') }}" class="btn-primary" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        + Creează Tichet Nou [cite: 63, 73]
+    </a>
 </div>
 
 <div class="content-box">
@@ -13,15 +19,15 @@
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Titlu</th>
-                    <th>Severitate</th>
-                    <th>Status curent</th>
+                    <th>ID [cite: 82]</th>
+                    <th>Titlu [cite: 82]</th>
+                    <th>Severitate [cite: 82]</th>
+                    <th>Status curent [cite: 82]</th>
                     {% if user['role'] == 'MANAGER' %}
-                        <th>Proprietar</th>
-                        <th>Acțiuni Manager</th>
+                        <th>Proprietar [cite: 82]</th>
+                        <th>Acțiuni Manager [cite: 91]</th>
                     {% endif %}
-                </tr>
+                    <th>Acțiuni Utilizator [cite: 63]</th> </tr>
             </thead>
             <tbody>
                 {% for ticket in tickets %}
@@ -43,6 +49,18 @@
                         </form>
                     </td>
                     {% endif %}
+
+                    <td>
+                        {% if ticket['owner_id'] == user['id'] %}
+                            <a href="{{ url_for('edit_ticket', ticket_id=ticket['id']) }}" style="color: blue; margin-right: 10px;">Editează</a>
+                            
+                            <form action="{{ url_for('delete_ticket', ticket_id=ticket['id']) }}" method="POST" style="display:inline;" onsubmit="return confirm('Sigur vrei să ștergi acest tichet?');">
+                                <button type="submit" style="background:none; border:none; color:red; cursor:pointer; padding:0;">Șterge</button>
+                            </form>
+                        {% else %}
+                            <span style="color: #ccc;">Fără permisiuni</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -54,14 +72,14 @@
 
 {% if user['role'] == 'MANAGER' %}
 <div class="content-box" style="margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px;">
-    <h3>Loguri de Audit (Securitate)</h3>
+    <h3>Loguri de Audit (Securitate) [cite: 86, 134]</h3>
     <table class="data-table" style="font-size: 0.9em;">
         <thead>
             <tr>
-                <th>Data / Ora</th>
-                <th>Utilizator</th>
-                <th>Acțiune Efectuată</th>
-                <th>Adresă IP</th>
+                <th>Data / Ora [cite: 87]</th>
+                <th>Utilizator [cite: 87]</th>
+                <th>Acțiune Efectuată [cite: 87]</th>
+                <th>Adresă IP [cite: 87]</th>
             </tr>
         </thead>
         <tbody>
@@ -79,6 +97,6 @@
 {% endif %}
 
 <div class="actions" style="margin-top: 20px;">
-    <a href="{{ url_for('logout') }}" class="btn-logout">Deconectare Securizată</a>
+    <a href="{{ url_for('logout') }}" class="btn-logout">Deconectare Securizată [cite: 63, 165]</a>
 </div>
 {% endblock %}
