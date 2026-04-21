@@ -1,33 +1,45 @@
-{% extends 'base.html' %}
+edit{% extends 'base.html' %}
 
 {% block content %}
 <div class="dashboard-header">
     <h2>Dashboard - Resurse Sensibile</h2>
-    <p>Utilizator: <strong>{{ user['email'] }}</strong> [cite: 63, 73]</p>
-    <p>Rol Sistem: <span class="badge">{{ user['role'] }}</span> [cite: 80]</p>
+    <p>Utilizator: <strong>{{ user['email'] }}</strong> </p>
+    <p>Rol Sistem: <span class="badge">{{ user['role'] }}</span> </p>
 </div>
 
 <div class="actions-bar" style="margin-bottom: 20px;">
     <a href="{{ url_for('create_ticket') }}" class="btn-primary" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-        + Creează Tichet Nou [cite: 63, 73]
+        + Creează Tichet Nou 
     </a>
 </div>
-
+<div class="search-container" style="margin-bottom: 25px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+    <form action="{{ url_for('search') }}" method="GET" style="display: flex; gap: 10px;">
+        <input type="text" name="q" placeholder="Caută în tichete (Securizat)..." 
+               value="{{ search_query or '' }}" 
+               style="flex-grow: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 4px;">
+        <button type="submit" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+            Căutare Parametrizată
+        </button>
+        {% if search_query %}
+            <a href="{{ url_for('dashboard') }}" style="padding: 10px; text-decoration: none; color: #6c757d;">Resetează</a>
+        {% endif %}
+    </form>
+</div>
 <div class="content-box">
     <h3>Tichetele din Sistem</h3>
     {% if tickets %}
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>ID [cite: 82]</th>
-                    <th>Titlu [cite: 82]</th>
-                    <th>Severitate [cite: 82]</th>
-                    <th>Status curent [cite: 82]</th>
+                    <th>ID </th>
+                    <th>Titlu </th>
+                    <th>Severitate</th>
+                    <th>Status curent </th>
                     {% if user['role'] == 'MANAGER' %}
-                        <th>Proprietar [cite: 82]</th>
-                        <th>Acțiuni Manager [cite: 91]</th>
+                        <th>Proprietar </th>
+                        <th>Acțiuni Manager </th>
                     {% endif %}
-                    <th>Acțiuni Utilizator [cite: 63]</th> </tr>
+                    <th>Acțiuni Utilizator </th> </tr>
             </thead>
             <tbody>
                 {% for ticket in tickets %}
@@ -76,7 +88,7 @@
     <table class="data-table" style="font-size: 0.9em;">
         <thead>
             <tr>
-                <th>Data / Ora [cite: 87]</th>
+                <th>Data / Ora </th>
                 <th>Utilizator [cite: 87]</th>
                 <th>Acțiune Efectuată [cite: 87]</th>
                 <th>Adresă IP [cite: 87]</th>

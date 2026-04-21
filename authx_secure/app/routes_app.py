@@ -181,6 +181,8 @@ def delete_ticket(ticket_id):
         
     conn.close()
     return redirect(url_for('dashboard'))
+# app/routes_app.py
+
 @app.route('/search', methods=['GET'])
 def search():
     if 'user_id' not in session:
@@ -190,25 +192,41 @@ def search():
     user_id = session['user_id']
     
     conn = get_db_connection()
-    user = conn.execute('SELECT role FROM users WHERE id = ?', (user_id,)).fetchone()
+    user = conn.execute('SELECT id, role, email FROM users WHERE id = ?', (user_id,)).fetchone()
     
-    # SECURE: Query Parametrizat (Prevenire SQL Injection)
-    # Folosim LIKE cu parametrii `?` protejați
+    # Pregătim parametrul pentru LIKE (ex: %căutare%)
+    search_param = f'%{query}%'
+    
     if user['role'] == 'MANAGER':
-        # Managerul caută în toate tichetele
-        tickets = conn.execute(
-            'SELECT * FROM tickets WHERE title LIKE ? OR description LIKE ?', 
-            (f'%{query}%', f'%{query}%')
-        ).fetchall()
+        # MANAGER: Căutare globală în toate tichetele + join cu users pentru email
+        tickets = conn.execute('''
+            SELECT tickets.*, users.email as owner_email 
+            FROM tickets 
+            JOIN users ON tickets.owner_id = users.id
+            WHERE tickets.title LIKE ? OR tickets.description LIKE ?
+            ORDER BY tickets.created_at DESC
+        ''', (search_param, search_param)).fetchall()
+        
+        # Logurile sunt necesare pentru afișarea dashboard-ului complet de manager
+        logs = conn.execute('''
+            SELECT audit_logs.*, users.email 
+            FROM audit_logs 
+            LEFT JOIN users ON audit_logs.user_id = users.id 
+            ORDER BY audit_logs.timestamp DESC LIMIT 50
+        ''').fetchall()
     else:
-        # Analystul caută doar în ale lui (Prevenire IDOR la search)
-        tickets = conn.execute(
-            'SELECT * FROM tickets WHERE owner_id = ? AND (title LIKE ? OR description LIKE ?)', 
-            (user_id, f'%{query}%', f'%{query}%')
-        ).fetchall()
+        # ANALYST: Căutare limitată strict la tichetele proprii (Prevenire IDOR) [cite: 139]
+        tickets = conn.execute('''
+            SELECT * FROM tickets 
+            WHERE owner_id = ? AND (title LIKE ? OR description LIKE ?)
+            ORDER BY created_at DESC
+        ''', (user_id, search_param, search_param)).fetchall()
+        logs = []
 
-    # Jurnalizăm căutarea
-    log_audit(user_id, f"Cautare query: {query}", "ticket", None, request.remote_addr)
     conn.close()
-
-    return render_template('dashboard.html', user=user, tickets=tickets, search_query=query)
+    
+    # Jurnalizare acțiune de căutare în Audit Logs [cite: 87, 91]
+    log_audit(user_id, f"Căutare după: {query}", "ticket", None, request.remote_addr)
+    
+    # Re-folosim dashboard.html pentru a afișa rezultatele
+    return render_template('dashboard.html', user=user, tickets=tickets, logs=logs, search_query=query)
