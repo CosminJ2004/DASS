@@ -84,6 +84,7 @@ def create_ticket():
 # --- UPDATE: Editare Ticket (Vulnerabil la IDOR și XSS) ---
 @app.route('/edit_ticket/<int:ticket_id>', methods=['GET', 'POST'])
 def edit_ticket(ticket_id):
+    # În v1 folosim cookie-ul nesecurizat pentru sesiune
     user_id = request.cookies.get('user_id')
     if not user_id:
         return redirect(url_for('login'))
@@ -91,21 +92,29 @@ def edit_ticket(ticket_id):
     conn = get_db_connection()
     
     if request.method == 'POST':
-        title = request.form['title']
-        description = request.form['description']
+        title = request.form.get('title')
+        description = request.form.get('description')
         
-        # VULNERABILITATE: Update fără a verifica dacă userul deține ticketul (IDOR)
+        # DEBUG: Vezi în terminal dacă datele ajung aici
+        print(f"[*] Update Ticket {ticket_id}: {title}")
+
+        # VULNERABILITATE: IDOR - Nu verificăm dacă ticket_id aparține de user_id
         conn.execute('UPDATE tickets SET title = ?, description = ? WHERE id = ?',
                      (title, description, ticket_id))
         conn.commit()
         conn.close()
+        
+        # Redirecționare către dashboard după salvare
         return redirect(url_for('dashboard'))
 
-    # VULNERABILITATE: Preluăm ticketul fără verificare owner_id (IDOR)
+    # Partea de GET: Preluăm datele pentru a popula formularul
     ticket = conn.execute('SELECT * FROM tickets WHERE id = ?', (ticket_id,)).fetchone()
     conn.close()
+    
+    if ticket is None:
+        return "Ticketul nu există!", 404
+        
     return render_template('edit_ticket.html', ticket=ticket)
-
 # --- DELETE: Ștergere Ticket (Vulnerabil la IDOR) ---
 @app.route('/delete_ticket/<int:ticket_id>', methods=['POST'])
 def delete_ticket(ticket_id):
