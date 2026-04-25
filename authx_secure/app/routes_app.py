@@ -113,12 +113,75 @@ def create_ticket():
         conn.close()
 
         # SECURE: Trasabilitate. Jurnalizăm acțiunea.
-        log_audit(user_id, f"A creat tichetul #{ticket_id} ({title[:15]}...)", request.remote_addr)
+        log_audit(
+    user_id, 
+    f"A creat tichetul #{ticket_id}", 
+    "ticket",          # Parametrul 'resource' 
+    str(ticket_id),    # Parametrul 'resource_id' 
+    request.remote_addr # Parametrul 'ip_address' 
+)
 
         flash('Tichetul a fost înregistrat cu succes în sistemul securizat.', 'success')
         return redirect(url_for('dashboard'))
 
     return render_template('create_ticket.html')
+
+# --- UPDATE: Editare Tichet ---
+@app.route('/edit_ticket/<int:ticket_id>', methods=['GET', 'POST'])
+def edit_ticket(ticket_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    # Verificăm dacă tichetul există și aparține utilizatorului (Prevenire IDOR)
+    ticket = conn.execute('SELECT * FROM tickets WHERE id = ? AND owner_id = ?', (ticket_id, user_id)).fetchone()
+    
+    if not ticket:
+        conn.close()
+        flash("Tichetul nu a fost găsit sau nu aveți permisiunea de a-l edita.", "error")
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        title = request.form.get('title').strip()
+        description = request.form.get('description').strip()
+        
+        conn.execute('UPDATE tickets SET title = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                     (title, description, ticket_id))
+        conn.commit()
+        conn.close()
+        
+        log_audit(user_id, f"A editat tichetul #{ticket_id}", "ticket", str(ticket_id), request.remote_addr)
+        flash("Tichetul a fost actualizat!", "success")
+        return redirect(url_for('dashboard'))
+
+    conn.close()
+    return render_template('edit_ticket.html', ticket=ticket)
+
+# --- DELETE: Ștergere Tichet ---
+@app.route('/delete_ticket/<int:ticket_id>', methods=['POST'])
+def delete_ticket(ticket_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    user_id = session['user_id']
+    conn = get_db_connection()
+    
+    # Prevenire IDOR: Doar owner-ul poate șterge tichetul
+    ticket = conn.execute('SELECT * FROM tickets WHERE id = ? AND owner_id = ?', (ticket_id, user_id)).fetchone()
+    
+    if ticket:
+        conn.execute('DELETE FROM tickets WHERE id = ?', (ticket_id,))
+        conn.commit()
+        log_audit(user_id, f"A șters tichetul #{ticket_id}", "ticket", str(ticket_id), request.remote_addr)
+        flash("Tichetul a fost șters definitiv.", "success")
+    else:
+        flash("Eroare: Nu poți șterge acest tichet.", "error")
+        
+    conn.close()
+    return redirect(url_for('dashboard'))
+# app/routes_app.py
 
 @app.route('/search', methods=['GET'])
 def search():
@@ -129,25 +192,41 @@ def search():
     user_id = session['user_id']
     
     conn = get_db_connection()
-    user = conn.execute('SELECT role FROM users WHERE id = ?', (user_id,)).fetchone()
+    user = conn.execute('SELECT id, role, email FROM users WHERE id = ?', (user_id,)).fetchone()
     
-    # SECURE: Query Parametrizat (Prevenire SQL Injection)
-    # Folosim LIKE cu parametrii `?` protejați
+    # Pregătim parametrul pentru LIKE (ex: %căutare%)
+    search_param = f'%{query}%'
+    
     if user['role'] == 'MANAGER':
-        # Managerul caută în toate tichetele
-        tickets = conn.execute(
-            'SELECT * FROM tickets WHERE title LIKE ? OR description LIKE ?', 
-            (f'%{query}%', f'%{query}%')
-        ).fetchall()
+        # MANAGER: Căutare globală în toate tichetele + join cu users pentru email
+        tickets = conn.execute('''
+            SELECT tickets.*, users.email as owner_email 
+            FROM tickets 
+            JOIN users ON tickets.owner_id = users.id
+            WHERE tickets.title LIKE ? OR tickets.description LIKE ?
+            ORDER BY tickets.created_at DESC
+        ''', (search_param, search_param)).fetchall()
+        
+        # Logurile sunt necesare pentru afișarea dashboard-ului complet de manager
+        logs = conn.execute('''
+            SELECT audit_logs.*, users.email 
+            FROM audit_logs 
+            LEFT JOIN users ON audit_logs.user_id = users.id 
+            ORDER BY audit_logs.timestamp DESC LIMIT 50
+        ''').fetchall()
     else:
-        # Analystul caută doar în ale lui (Prevenire IDOR la search)
-        tickets = conn.execute(
-            'SELECT * FROM tickets WHERE owner_id = ? AND (title LIKE ? OR description LIKE ?)', 
-            (user_id, f'%{query}%', f'%{query}%')
-        ).fetchall()
+        # ANALYST: Căutare limitată strict la tichetele proprii (Prevenire IDOR) [cite: 139]
+        tickets = conn.execute('''
+            SELECT * FROM tickets 
+            WHERE owner_id = ? AND (title LIKE ? OR description LIKE ?)
+            ORDER BY created_at DESC
+        ''', (user_id, search_param, search_param)).fetchall()
+        logs = []
 
-    # Jurnalizăm căutarea
-    log_audit(user_id, f"Cautare query: {query}", "ticket", None, request.remote_addr)
     conn.close()
-
-    return render_template('dashboard.html', user=user, tickets=tickets, search_query=query)
+    
+    # Jurnalizare acțiune de căutare în Audit Logs [cite: 87, 91]
+    log_audit(user_id, f"Căutare după: {query}", "ticket", None, request.remote_addr)
+    
+    # Re-folosim dashboard.html pentru a afișa rezultatele
+    return render_template('dashboard.html', user=user, tickets=tickets, logs=logs, search_query=query)
