@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Autentificare</h2>
+<form method="POST" action="{{ url_for('login') }}">
+    <label for="email">Email:</label>
+    <input type="text" name="email" id="email" required>
+    
+    <label for="password">Parolă:</label>
+    <input type="password" name="password" id="password" required>
+    
+    <button type="submit">Login</button>
+</form>
+<p><a href="{{ url_for('forgot') }}">Ai uitat parola?</a></p>
+<p>Nu ai cont? <a href="{{ url_for('register') }}">Creează unul</a>.</p>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Creare Tichet Nou</h2>
+<form method="POST">
+    <label for="title">Titlu Problemă:</label>
+    <input type="text" name="title" id="title" required>
+    
+    <label for="description">Descriere Detaliată (Vulnerabilă la XSS):</label>
+    <textarea name="description" id="description" rows="5" required></textarea>
+    
+    <label for="severity">Severitate:</label>
+    <select name="severity" id="severity">
+        <option value="LOW">Scăzută</option>
+        <option value="MED">Medie</option>
+        <option value="HIGH">Ridicată</option>
+    </select>
+    
+    <button type="submit">Trimite Tichet</button>
+</form>
+<p><a href="{{ url_for('dashboard') }}">Înapoi la Dashboard</a></p>
+{% endblock %}

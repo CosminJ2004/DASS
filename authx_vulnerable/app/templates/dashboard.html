@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="border: 2px solid #d9534f; padding: 20px; border-radius: 10px; background-color: #fff5f5;">
+    <h2 style="color: #d9534f;">Panou de Control (v1 - Vulnerabil)</h2>
+    
+    <div style="margin: 20px 0; padding: 15px; background: #eee; border-left: 5px solid #333;">
+        <p>Utilizator logat: <strong>{{ user['email'] }}</strong></p>
+        <p style="font-size: 1.2em;">
+            Rol detectat în sesiune (din cookie): 
+            <span style="background: yellow; padding: 5px 10px; font-weight: bold; border: 1px solid #000;">
+                {{ current_role }}
+            </span>
+        </p>
+    </div>
+
+    <div style="margin-bottom: 20px; padding: 10px; background: #e9ecef;">
+        <form action="{{ url_for('search') }}" method="GET">
+            <input type="text" name="q" placeholder="Caută tichete..." value="{{ search_query or '' }}">
+            <button type="submit">Căutare SQL</button>
+        </form>
+    </div>
+
+    <h3>Resurse disponibile pentru rolul de {{ current_role }}:</h3>
+    
+    {% if tickets %}
+        <table style="width: 100%; border-collapse: collapse; background: white;">
+            <thead>
+                <tr style="background: #333; color: white;">
+                    <th style="padding: 10px; border: 1px solid #ccc;">ID</th>
+                    <th style="padding: 10px; border: 1px solid #ccc;">Titlu</th>
+                    <th style="padding: 10px; border: 1px solid #ccc;">Descriere (XSS)</th>
+                    <th style="padding: 10px; border: 1px solid #ccc;">Status</th>
+                    <th style="padding: 10px; border: 1px solid #ccc;">Acțiuni</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for ticket in tickets %}
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">#{{ ticket['id'] }}</td>
+                    <td style="padding: 10px; border: 1px solid #ccc;">{{ ticket['title'] }}</td>
+                    
+                    <td style="padding: 10px; border: 1px solid #ccc;">{{ ticket['description'] | safe }}</td>
+                    
+                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">{{ ticket['status'] }}</td>
+                    <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">
+                        <a href="{{ url_for('edit_ticket', ticket_id=ticket['id']) }}" style="color: green; text-decoration: none; font-weight: bold;">[Editează]</a>
+                        
+                        <form action="{{ url_for('delete_ticket', ticket_id=ticket['id']) }}" method="POST" style="display:inline;" onsubmit="return confirm('Ștergi acest tichet?');">
+                            <button type="submit" style="color: red; background: none; border: none; cursor: pointer; font-weight: bold;">[Șterge]</button>
+                        </form>
+                    </td>
+                </tr>
+
+                {% if current_role == 'MANAGER' %}
+                <tr style="background: #f0f0f0;">
+                    <td colspan="5" style="padding: 5px 10px; font-size: 0.85em; border: 1px solid #ccc;">
+                        <span style="color: #d9534f; font-weight: bold;">[MANAGER PRIVILEGES]</span> Schimbă status:
+                        <form action="{{ url_for('change_status', ticket_id=ticket['id']) }}" method="POST" style="display:inline;">
+                            <select name="status">
+                                <option value="OPEN" {% if ticket['status'] == 'OPEN' %}selected{% endif %}>OPEN</option>
+                                <option value="IN PROGRESS" {% if ticket['status'] == 'IN PROGRESS' %}selected{% endif %}>IN PROGRESS</option>
+                                <option value="RESOLVED" {% if ticket['status'] == 'RESOLVED' %}selected{% endif %}>RESOLVED</option>
+                            </select>
+                            <button type="submit" style="background: #5bc0de; color: white; border: none; padding: 2px 5px; cursor: pointer;">Update</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Nu există tichete vizibile.</p>
+    {% endif %}
+
+    <hr style="margin-top: 30px;">
+    
+    <div style="display: flex; gap: 20px; align-items: center;">
+        <a href="{{ url_for('create_ticket') }}" style="background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+            + Creează Tichet Nou
+        </a>
+        <a href="{{ url_for('logout') }}" style="color: #777; text-decoration: underline;">Logout</a>
+    </div>
+</div>
+{% endblock %}
