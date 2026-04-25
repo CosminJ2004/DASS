@@ -4,7 +4,7 @@ from app import app, get_db_connection, limiter, log_audit
 import bcrypt
 import secrets
 from datetime import datetime, timedelta
-
+import sqlite3
 # --- REGISTER ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -25,16 +25,19 @@ def register():
         try:
             conn.execute('INSERT INTO users (email, password_hash) VALUES (?, ?)', (email, password_hash))
             conn.commit()
+            conn.close() # Close connection before logging
+            
             # UPDATED: log_audit cu 5 parametri
             log_audit(None, f"Register succes pentru {email}", "auth", None, request.remote_addr)
             flash('Cont creat cu succes!', 'success')
             return redirect(url_for('login'))
-        except conn.IntegrityError:
+            
+        except sqlite3.IntegrityError: # Specific error handling
+            conn.close() # Close connection if email exists
             # Fix 4.4: Nu confirmăm explicit că email-ul există deja (User Enumeration)
             flash('Dacă adresa nu a fost folosită, contul a fost creat.', 'success')
-        finally:
-            conn.close()
-
+            return redirect(url_for('register')) 
+            
     return render_template('register.html')
 
 
@@ -53,7 +56,7 @@ def login():
         generic_error = 'Email sau parolă incorectă.'
 
         if user is None:
-            conn.close()
+            conn.close() # Close connection before logging
             # UPDATED: log_audit cu 5 parametri
             log_audit(None, f"Login eșuat (user inexistent) pt {email}", "auth", None, request.remote_addr)
             flash(generic_error, 'error')
@@ -61,7 +64,7 @@ def login():
 
         # Fix 4.3: Verificăm dacă contul este blocat
         if user['locked']:
-            conn.close()
+            conn.close() # Close connection before logging
             # UPDATED: log_audit cu 5 parametri
             log_audit(user['id'], "Login încercat pe cont blocat", "auth", None, request.remote_addr)
             flash('Contul este temporar blocat din cauza prea multor încercări eșuate.', 'error')
@@ -73,13 +76,16 @@ def login():
             new_attempts = user['failed_attempts'] + 1
             if new_attempts >= 5:
                 conn.execute('UPDATE users SET locked = 1, failed_attempts = ? WHERE id = ?', (new_attempts, user['id']))
+                conn.commit()
+                conn.close() # Close connection before logging
+                
                 # UPDATED: log_audit cu 5 parametri
                 log_audit(user['id'], "CONT BLOCAT - Brute force detectat", "auth", None, request.remote_addr)
             else:
                 conn.execute('UPDATE users SET failed_attempts = ? WHERE id = ?', (new_attempts, user['id']))
-            conn.commit()
-            conn.close()
-            
+                conn.commit()
+                conn.close() # Close connection
+
             flash(generic_error, 'error')
             return redirect(url_for('login'))
 
@@ -90,7 +96,7 @@ def login():
         conn.execute('UPDATE users SET failed_attempts = 0, session_token = ? WHERE id = ?', 
                      (session_token, user['id']))
         conn.commit()
-        conn.close()
+        conn.close() # Close connection before logging
 
         session.clear() 
         session.permanent = True
@@ -103,8 +109,6 @@ def login():
         return redirect(url_for('dashboard'))
 
     return render_template('login.html')
-
-
 # --- LOGOUT ---
 @app.route('/logout')
 def logout():
