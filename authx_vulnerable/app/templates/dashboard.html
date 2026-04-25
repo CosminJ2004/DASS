@@ -29,8 +29,9 @@
                 <tr style="background: #333; color: white;">
                     <th style="padding: 10px; border: 1px solid #ccc;">ID</th>
                     <th style="padding: 10px; border: 1px solid #ccc;">Titlu</th>
+                    <th style="padding: 10px; border: 1px solid #ccc;">Descriere (XSS)</th>
                     <th style="padding: 10px; border: 1px solid #ccc;">Status</th>
-                    <th style="padding: 10px; border: 1px solid #ccc;">Acțiuni CRUD (Vulnerabil IDOR)</th>
+                    <th style="padding: 10px; border: 1px solid #ccc;">Acțiuni</th>
                 </tr>
             </thead>
             <tbody>
@@ -38,20 +39,22 @@
                 <tr>
                     <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">#{{ ticket['id'] }}</td>
                     <td style="padding: 10px; border: 1px solid #ccc;">{{ ticket['title'] }}</td>
+                    
+                    <td style="padding: 10px; border: 1px solid #ccc;">{{ ticket['description'] | safe }}</td>
+                    
                     <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">{{ ticket['status'] }}</td>
                     <td style="padding: 10px; border: 1px solid #ccc; text-align: center;">
                         <a href="{{ url_for('edit_ticket', ticket_id=ticket['id']) }}" style="color: green; text-decoration: none; font-weight: bold;">[Editează]</a>
                         
-                        <form action="{{ url_for('delete_ticket', ticket_id=ticket['id']) }}" method="POST" style="display:inline;" onsubmit="return confirm('Ștergi acest tichet? (Nu se verifică cine ești!)');">
+                        <form action="{{ url_for('delete_ticket', ticket_id=ticket['id']) }}" method="POST" style="display:inline;" onsubmit="return confirm('Ștergi acest tichet?');">
                             <button type="submit" style="color: red; background: none; border: none; cursor: pointer; font-weight: bold;">[Șterge]</button>
                         </form>
                     </td>
                 </tr>
 
-                {# VULNERABILITATE: Afișăm opțiunile de management EXCLUSIV pe baza cookie-ului 'role' din browser #}
                 {% if current_role == 'MANAGER' %}
                 <tr style="background: #f0f0f0;">
-                    <td colspan="4" style="padding: 5px 10px; font-size: 0.85em; border: 1px solid #ccc;">
+                    <td colspan="5" style="padding: 5px 10px; font-size: 0.85em; border: 1px solid #ccc;">
                         <span style="color: #d9534f; font-weight: bold;">[MANAGER PRIVILEGES]</span> Schimbă status:
                         <form action="{{ url_for('change_status', ticket_id=ticket['id']) }}" method="POST" style="display:inline;">
                             <select name="status">
@@ -75,13 +78,9 @@
     
     <div style="display: flex; gap: 20px; align-items: center;">
         <a href="{{ url_for('create_ticket') }}" style="background: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-            + Creează Tichet Nou (Vulnerabil XSS)
+            + Creează Tichet Nou
         </a>
-        <a href="{{ url_for('logout') }}" style="color: #777; text-decoration: underline;">Deconectare (Fără invalidare server)</a>
+        <a href="{{ url_for('logout') }}" style="color: #777; text-decoration: underline;">Logout</a>
     </div>
-</div>
-
-<div style="margin-top: 20px; font-size: 0.8em; color: #666;">
-    <p><strong>Notă Pentest:</strong> Modifică cookie-ul <code>role</code> în "MANAGER" folosind F12 pentru a accesa opțiunile de admin.</p>
 </div>
 {% endblock %}
