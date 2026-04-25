@@ -3,25 +3,43 @@
 {% block content %}
 <div class="dashboard-header">
     <h2>Dashboard - Resurse Sensibile</h2>
-    <p>Utilizator: <strong>{{ user['email'] }}</strong></p>
-    <p>Rol Sistem: <span class="badge">{{ user['role'] }}</span></p>
+    <p>Utilizator: <strong>{{ user['email'] }}</strong> </p>
+    <p>Rol Sistem: <span class="badge">{{ user['role'] }}</span> </p>
 </div>
 
+<div class="actions-bar" style="margin-bottom: 20px;">
+    <a href="{{ url_for('create_ticket') }}" class="btn-primary" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+        + Creează Tichet Nou 
+    </a>
+</div>
+<div class="search-container" style="margin-bottom: 25px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+    <form action="{{ url_for('search') }}" method="GET" style="display: flex; gap: 10px;">
+        <input type="text" name="q" placeholder="Caută în tichete (Securizat)..." 
+               value="{{ search_query or '' }}" 
+               style="flex-grow: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 4px;">
+        <button type="submit" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
+            Căutare Parametrizată
+        </button>
+        {% if search_query %}
+            <a href="{{ url_for('dashboard') }}" style="padding: 10px; text-decoration: none; color: #6c757d;">Resetează</a>
+        {% endif %}
+    </form>
+</div>
 <div class="content-box">
     <h3>Tichetele din Sistem</h3>
     {% if tickets %}
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Titlu</th>
+                    <th>ID </th>
+                    <th>Titlu </th>
                     <th>Severitate</th>
-                    <th>Status curent</th>
+                    <th>Status curent </th>
                     {% if user['role'] == 'MANAGER' %}
-                        <th>Proprietar</th>
-                        <th>Acțiuni Manager</th>
+                        <th>Proprietar </th>
+                        <th>Acțiuni Manager </th>
                     {% endif %}
-                </tr>
+                    <th>Acțiuni Utilizator </th> </tr>
             </thead>
             <tbody>
                 {% for ticket in tickets %}
@@ -43,6 +61,18 @@
                         </form>
                     </td>
                     {% endif %}
+
+                    <td>
+                        {% if ticket['owner_id'] == user['id'] %}
+                            <a href="{{ url_for('edit_ticket', ticket_id=ticket['id']) }}" style="color: blue; margin-right: 10px;">Editează</a>
+                            
+                            <form action="{{ url_for('delete_ticket', ticket_id=ticket['id']) }}" method="POST" style="display:inline;" onsubmit="return confirm('Sigur vrei să ștergi acest tichet?');">
+                                <button type="submit" style="background:none; border:none; color:red; cursor:pointer; padding:0;">Șterge</button>
+                            </form>
+                        {% else %}
+                            <span style="color: #ccc;">Fără permisiuni</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -58,8 +88,8 @@
     <table class="data-table" style="font-size: 0.9em;">
         <thead>
             <tr>
-                <th>Data / Ora</th>
-                <th>Utilizator</th>
+                <th>Data / Ora </th>
+                <th>Utilizator </th>
                 <th>Acțiune Efectuată</th>
                 <th>Adresă IP</th>
             </tr>
@@ -79,6 +109,6 @@
 {% endif %}
 
 <div class="actions" style="margin-top: 20px;">
-    <a href="{{ url_for('logout') }}" class="btn-logout">Deconectare Securizată</a>
+    <a href="{{ url_for('logout') }}" class="btn-logout">Deconectare Securizată </a>
 </div>
 {% endblock %}
