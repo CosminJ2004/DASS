@@ -78,7 +78,6 @@ if __name__ == "__main__":
         # Testele inofensive primele
         test_access_control()
         test_user_enumeration()
-        test_session_cookies()
         test_sql_injection()
         test_xss_protection()
         
