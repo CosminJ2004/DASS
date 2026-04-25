@@ -1,4 +1,4 @@
-edit{% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
 <div class="dashboard-header">
@@ -84,14 +84,14 @@ edit{% extends 'base.html' %}
 
 {% if user['role'] == 'MANAGER' %}
 <div class="content-box" style="margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px;">
-    <h3>Loguri de Audit (Securitate) [cite: 86, 134]</h3>
+    <h3>Loguri de Audit (Securitate)</h3>
     <table class="data-table" style="font-size: 0.9em;">
         <thead>
             <tr>
                 <th>Data / Ora </th>
-                <th>Utilizator [cite: 87]</th>
-                <th>Acțiune Efectuată [cite: 87]</th>
-                <th>Adresă IP [cite: 87]</th>
+                <th>Utilizator </th>
+                <th>Acțiune Efectuată</th>
+                <th>Adresă IP</th>
             </tr>
         </thead>
         <tbody>
@@ -109,6 +109,6 @@ edit{% extends 'base.html' %}
 {% endif %}
 
 <div class="actions" style="margin-top: 20px;">
-    <a href="{{ url_for('logout') }}" class="btn-logout">Deconectare Securizată [cite: 63, 165]</a>
+    <a href="{{ url_for('logout') }}" class="btn-logout">Deconectare Securizată </a>
 </div>
 {% endblock %}
