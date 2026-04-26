@@ -40,3 +40,16 @@ def log_audit(user_id, action, resource, resource_id, ip_address):
     conn.commit()
     conn.close()
 from app import routes_auth, routes_app
+
+@app.after_request
+def add_security_headers(response):
+    # Aceasta este o politică CSP restrictivă și sigură
+    csp_policy = (
+        "default-src 'self'; "      # Permite resurse doar de pe domeniul propriu
+        "script-src 'self'; "       # Permite scripturi DOAR din fișierele locale
+        "style-src 'self' 'unsafe-inline'; " # Permite CSS propriu și stiluri inline
+        "img-src 'self' data:; "    # Permite imagini locale sau de tip data:
+        "frame-ancestors 'none';"   # Previne Clickjacking (nu permite afișarea în <iframe>)
+    )
+    response.headers['Content-Security-Policy'] = csp_policy
+    return response
