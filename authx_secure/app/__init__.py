@@ -13,6 +13,7 @@ app.secret_key = os.urandom(32)
 
 # SECURE: Configurare flag-uri pentru Cookie-uri (Fix 4.5)
 app.config['SESSION_COOKIE_HTTPONLY'] = True # Previne accesul XSS la cookie
+app.config['SESSION_COOKIE_SECURE'] = True    # Cookie-ul este trimis DOAR prin HTTPS
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax' # Previne atacurile CSRF
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30) # Expirare sesiune
 
