@@ -5,7 +5,7 @@ def init_db():
     connection = sqlite3.connect('vulnerable_app.db')
     cursor = connection.cursor()
 
-    # 1. Tabelul USERS [cite: 25, 26]
+    # 1. Tabelul USERS 
     # Vulnerabilitate: 'password' va stoca parola în clar (sau un hash slab mai târziu), nu un hash modern.
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -18,7 +18,7 @@ def init_db():
         )
     ''')
 
-    # 2. Tabelul TICKETS [cite: 27, 28]
+    # 2. Tabelul TICKETS 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS tickets (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,7 +33,7 @@ def init_db():
         )
     ''')
 
-    # 3. Tabelul AUDIT_LOGS [cite: 32, 33]
+    # 3. Tabelul AUDIT_LOGS 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS audit_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
