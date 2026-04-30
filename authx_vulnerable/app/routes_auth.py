@@ -9,14 +9,14 @@ def register():
         email = request.form['email']
         password = request.form['password']
 
-        # VULNERABILITATE: Password Policy slab (acceptă parole scurte/triviale) [cite: 11]
+        # VULNERABILITATE: Password Policy slab (acceptă parole scurte/triviale)
         if not email or not password:
             flash('Toate câmpurile sunt obligatorii.')
             return redirect(url_for('register'))
 
         conn = get_db_connection()
         try:
-            # VULNERABILITATE: Stocare nesigură a parolelor (stocate în clar) [cite: 11]
+            # VULNERABILITATE: Stocare nesigură a parolelor (stocate în clar) 
             conn.execute('INSERT INTO users (email, password) VALUES (?, ?)', (email, password))
             conn.commit()
             flash('Cont creat cu succes! Te poți loga.')

@@ -215,7 +215,7 @@ def search():
             ORDER BY audit_logs.timestamp DESC LIMIT 50
         ''').fetchall()
     else:
-        # ANALYST: Căutare limitată strict la tichetele proprii (Prevenire IDOR) [cite: 139]
+        # ANALYST: Căutare limitată strict la tichetele proprii (Prevenire IDOR)
         tickets = conn.execute('''
             SELECT * FROM tickets 
             WHERE owner_id = ? AND (title LIKE ? OR description LIKE ?)
@@ -225,7 +225,7 @@ def search():
 
     conn.close()
     
-    # Jurnalizare acțiune de căutare în Audit Logs [cite: 87, 91]
+    # Jurnalizare acțiune de căutare în Audit Logs
     log_audit(user_id, f"Căutare după: {query}", "ticket", None, request.remote_addr)
     
     # Re-folosim dashboard.html pentru a afișa rezultatele

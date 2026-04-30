@@ -1,4 +1,5 @@
 # app/__init__.py
+from authx_vulnerable.app import routes_auth
 from flask import Flask
 import sqlite3
 
@@ -17,4 +18,4 @@ def get_db_connection():
 # Aici vom importa rutele mai târziu, după ce le creăm
 # from app import routes_auth, routes_app
 # Importăm rutele după inițializarea aplicației pentru a evita "circular imports"
-from app import routes_auth, routes_app
+from app import routes_auth
